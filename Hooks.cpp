@@ -7,8 +7,8 @@ void NvUtilInit_hook() {
     // Setup storage paths
     static char sStoragePath[] = "/storage/emulated/0/Android/Test/files/";
     uintptr_t addrs[] = {
-        g_libGTASA + (VER_x32 ? 0x679698 : 0x850D50),
-        g_libGTASA + (VER_x32 ? 0x679984 : 0x851328)
+        g_libGTASA + (VER_x32 ? 0x6D687C : 0x8B46A8),
+        g_libGTASA + (VER_x32 ? 0x6796A0 : 0x850D50)
     };
 
     // Apply storage path
