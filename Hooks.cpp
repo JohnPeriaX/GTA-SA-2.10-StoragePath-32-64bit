@@ -1,36 +1,29 @@
-Update #include "../../vendor/patch/patch.h" to match your own file location. - เปลี่ยนเป็นตำแหน่งของคุณ
+#include "../../vendor/patch/patch.h"
 
 void (*NvUtilInit)();
 void NvUtilInit_hook() {
     NvUtilInit();
-    
-    // Setup storage paths
-    static char sStoragePath[] = "/storage/emulated/0/Android/Test/files/";
-    uintptr_t addrs[] = {
-        g_libGTASA + (VER_x32 ? 0x6D687C : 0x8B46A8),
-        g_libGTASA + (VER_x32 ? 0x6796A0 : 0x850D50)
-    };
 
-    // Apply storage path
-    for (auto addr : addrs) {
+    // 1. Setup Path
+    static const char* path = "/storage/emulated/0/Android/Test/files/";
+    g_pszStorage = path;
+
+    for (auto off : { VER_x32 ? 0x6D687C : 0x8B46A8, VER_x32 ? 0x6796A0 : 0x850D50 }) {
+        uintptr_t addr = g_libGTASA + off;
         Patch::UnFuck(addr);
-        *(const char**)addr = sStoragePath;
+        *(const char**)addr = path;
     }
-    g_pszStorage = sStoragePath;
 
-    // Log and initialize
-    Log::print("[INFO]: Storage path set to: %s", sStoragePath);
+    Log::print("[INFO] Storage: %s", path);
     CSettings::LoadSettings();
-    
-    // Crash reporting setup
-    firebase::crashlytics::SetCustomKey("libGTASA.so", 
-        (std::string("0x") + std::to_string(g_libGTASA)).c_str());
-    firebase::crashlytics::SetCustomKey("libsamp.so", 
-        (std::string("0x") + std::to_string(g_libSAMP)).c_str());
-    firebase::crashlytics::SetCustomKey("storage.root", sStoragePath);
+
+    // 2. Crashlytics
+    using namespace firebase::crashlytics;
+    SetCustomKey("storage.root", path);
+    SetCustomKey("libGTASA.so", ("0x" + std::to_string(g_libGTASA)).c_str());
+    SetCustomKey("libsamp.so",  ("0x" + std::to_string(g_libSAMP)).c_str());
 }
 
-void InstallSpecialHooks()
-{
+void InstallSpecialHooks() {
     Patch::InlineHook("_Z10NvUtilInitv", &NvUtilInit_hook, &NvUtilInit);
 }
